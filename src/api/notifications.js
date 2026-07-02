@@ -13,3 +13,8 @@ export function markNotificationRead(id) {
     body: JSON.stringify({ n_status: 1 }),
   });
 }
+
+export async function getUnreadCount() {
+  const rows = await apiFetch("/notifications?unread=true");
+  return rows.length;
+}

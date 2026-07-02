@@ -125,7 +125,7 @@ export const CSS = `
 
   /* ── FLEET VISUALS ── */
   .vis-wrap { width:320px; height:140px; position:relative; display:flex; align-items:flex-end; justify-content:center; }
-  .vis-wrap.vis-photo { height:180px; align-items:center; background:var(--b3); border:1px solid rgba(196,154,14,.1); overflow:hidden; }
+  .vis-wrap.vis-photo { width:100%; max-width:320px; height:180px; align-items:center; background:var(--b3); border:1px solid rgba(196,154,14,.1); overflow:hidden; }
   .vis-img { width:100%; height:100%; object-fit:cover; display:block; }
   /* car */
   .car-body { position:absolute; bottom:22px; left:10px; right:10px; height:66px; background:linear-gradient(135deg,var(--b5),var(--b3)); border:1px solid rgba(196,154,14,.18); clip-path:polygon(7% 100%,0% 52%,14% 18%,34% 4%,66% 4%,82% 18%,100% 52%,93% 100%); }
@@ -245,9 +245,10 @@ export const CSS = `
   /* ── DASHBOARD SHELL ── */
   .dash-layout { min-height: 100vh; display: grid; grid-template-columns: 240px 1fr; background: var(--black); }
   .dash-sidebar { background: var(--b2); border-right: 1px solid rgba(196,154,14,.09); padding: 2rem 1.2rem; display: flex; flex-direction: column; gap: .3rem; }
-  .dash-nav-link { font-family:'Josefin Sans',sans-serif; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color: var(--muted2); text-decoration: none; padding: .75rem .9rem; border-left: 3px solid transparent; transition: color .2s, border-color .2s, background .2s; }
+  .dash-nav-link { font-family:'Josefin Sans',sans-serif; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color: var(--muted2); text-decoration: none; padding: .75rem .9rem; border-left: 3px solid transparent; transition: color .2s, border-color .2s, background .2s; display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
   .dash-nav-link:hover { color: var(--cream); background: var(--b3); }
   .dash-nav-link.active { color: var(--gold-l); border-left-color: var(--gold); background: var(--b4); }
+  .dash-nav-badge { background: #e02424; color: #fff; font-family:'Josefin Sans',sans-serif; font-size:.62rem; font-weight:600; letter-spacing:normal; line-height:1; min-width:1.3em; padding:.28em .45em; border-radius:999px; text-align:center; flex-shrink:0; }
   .dash-main { display: flex; flex-direction: column; }
   .dash-topbar { display: flex; align-items: center; justify-content: space-between; padding: 1.4rem 2.4rem; border-bottom: 1px solid rgba(196,154,14,.09); background: var(--b2); }
   .dash-content { padding: 2.4rem; flex: 1; }

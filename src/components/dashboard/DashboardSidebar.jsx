@@ -1,4 +1,6 @@
-import { NavLink } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import { getUnreadCount } from "../../api/notifications";
 
 const CUSTOMER_LINKS = [
   { to: "/customer", label: "Dashboard", end: true },
@@ -10,6 +12,13 @@ const CUSTOMER_LINKS = [
 ];
 
 export function DashboardSidebar({ links = CUSTOMER_LINKS }) {
+  const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    getUnreadCount().then(setUnreadCount).catch(() => {});
+  }, [location.pathname]);
+
   return (
     <nav className="dash-sidebar">
       {links.map((l) => (
@@ -20,6 +29,9 @@ export function DashboardSidebar({ links = CUSTOMER_LINKS }) {
           className={({ isActive }) => `dash-nav-link${isActive ? " active" : ""}`}
         >
           {l.label}
+          {l.to.endsWith("/notifications") && unreadCount > 0 && (
+            <span className="dash-nav-badge">{unreadCount}</span>
+          )}
         </NavLink>
       ))}
     </nav>
