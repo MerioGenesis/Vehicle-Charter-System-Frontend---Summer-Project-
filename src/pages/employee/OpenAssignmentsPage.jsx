@@ -56,9 +56,12 @@ export default function OpenAssignmentsPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "1px", background: "rgba(196,154,14,.06)" }}>
           {bookings.map((b) => (
             <div key={b.wa_b_id} className="dash-card" style={{ border: "none", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div className="dash-card-title">{b.b_pickUpLocation} → {b.b_destination}</div>
-                <div className="dash-card-sub">{b.b_dateFrom?.slice(0, 10)} · {b.v_name} ({b.vt_name})</div>
+              <div className="dash-vehicle-cell">
+                {b.v_imageURL && <img className="dash-thumb" src={b.v_imageURL} alt={b.v_name} loading="lazy" />}
+                <div>
+                  <div className="dash-card-title">{b.b_pickUpLocation} → {b.b_destination}</div>
+                  <div className="dash-card-sub">{b.b_dateFrom?.slice(0, 10)} · {b.v_name} ({b.vt_name})</div>
+                </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: ".6rem" }}>
                 <input

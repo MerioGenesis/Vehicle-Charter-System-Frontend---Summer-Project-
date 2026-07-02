@@ -1,6 +1,15 @@
 export function FleetVisual({ vehicle }) {
   if (!vehicle) return null;
   const cat = vehicle.cat;
+
+  if (vehicle.imageUrl) {
+    return (
+      <div className="vis-wrap vis-photo">
+        <img className="vis-img" src={vehicle.imageUrl} alt={vehicle.name} loading="lazy" />
+      </div>
+    );
+  }
+
   return (
     <div className="vis-wrap">
       {cat === "car" && (

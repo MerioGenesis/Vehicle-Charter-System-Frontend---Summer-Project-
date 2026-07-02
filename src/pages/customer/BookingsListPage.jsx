@@ -39,7 +39,10 @@ export default function BookingsListPage() {
             <tr key={b.b_id}>
               <td>{b.b_dateFrom?.slice(0, 10)} {b.b_timeStart}</td>
               <td>{b.b_pickUpLocation} → {b.b_destination}</td>
-              <td>{b.v_name} ({b.vt_name})</td>
+              <td className="dash-vehicle-cell">
+                {b.v_imageURL && <img className="dash-thumb" src={b.v_imageURL} alt={b.v_name} loading="lazy" />}
+                {b.v_name} ({b.vt_name})
+              </td>
               <td><BookingStatusBadge status={b.b_status} /></td>
               <td><Link to={`/customer/bookings/${b.b_id}`}>View</Link></td>
             </tr>

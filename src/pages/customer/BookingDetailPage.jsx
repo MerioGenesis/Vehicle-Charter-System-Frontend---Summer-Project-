@@ -45,6 +45,14 @@ export default function BookingDetailPage() {
     <div>
       <h1 className="auth-title" style={{ marginBottom: "1.4rem" }}>Booking <em>#{booking.b_id}</em></h1>
 
+      {booking.v_imageURL && (
+        <img
+          src={booking.v_imageURL}
+          alt={booking.v_name}
+          style={{ width: "100%", maxWidth: 480, height: 200, objectFit: "cover", border: "1px solid rgba(196,154,14,.1)", marginBottom: "1.2rem", display: "block" }}
+        />
+      )}
+
       <div className="dash-card" style={{ maxWidth: 480, marginBottom: "1.2rem" }}>
         {[
           ["Status", <BookingStatusBadge status={booking.b_status} />],

@@ -35,7 +35,10 @@ export default function MyAssignmentsPage() {
             <tr key={a.wa_b_id}>
               <td>{a.b_dateFrom?.slice(0, 10)}</td>
               <td>{a.wa_startTime}</td>
-              <td>{a.v_name} ({a.vt_name})</td>
+              <td className="dash-vehicle-cell">
+                {a.v_imageURL && <img className="dash-thumb" src={a.v_imageURL} alt={a.v_name} loading="lazy" />}
+                {a.v_name} ({a.vt_name})
+              </td>
               <td><BookingStatusBadge status={a.b_status} /></td>
             </tr>
           ))}

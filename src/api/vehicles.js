@@ -11,6 +11,7 @@ export function toFleetItem(vehicle) {
     seats: `${vehicle.v_seatsNo} passengers`,
     tag: (vehicle.vehicleType || "").toUpperCase(),
     cat,
+    imageUrl: vehicle.v_imageURL || null,
   };
 }
 

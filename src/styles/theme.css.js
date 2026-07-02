@@ -125,6 +125,8 @@ export const CSS = `
 
   /* ── FLEET VISUALS ── */
   .vis-wrap { width:320px; height:140px; position:relative; display:flex; align-items:flex-end; justify-content:center; }
+  .vis-wrap.vis-photo { height:180px; align-items:center; background:var(--b3); border:1px solid rgba(196,154,14,.1); overflow:hidden; }
+  .vis-img { width:100%; height:100%; object-fit:cover; display:block; }
   /* car */
   .car-body { position:absolute; bottom:22px; left:10px; right:10px; height:66px; background:linear-gradient(135deg,var(--b5),var(--b3)); border:1px solid rgba(196,154,14,.18); clip-path:polygon(7% 100%,0% 52%,14% 18%,34% 4%,66% 4%,82% 18%,100% 52%,93% 100%); }
   .car-roof { position:absolute; bottom:66px; left:72px; right:72px; height:46px; background:linear-gradient(135deg,var(--b4),var(--b5)); border-top:1px solid rgba(196,154,14,.2); clip-path:polygon(6% 100%,16% 0%,84% 0%,94% 100%); }
@@ -278,6 +280,8 @@ export const CSS = `
   .dash-vehicle-card { background: var(--b2); border: 1px solid rgba(196,154,14,.1); padding: 1.2rem; cursor: pointer; text-align: center; transition: border-color .2s, background .2s; }
   .dash-vehicle-card:hover { border-color: rgba(196,154,14,.3); }
   .dash-vehicle-card.sel { border-color: var(--gold); background: var(--b4); }
+  .dash-thumb { width: 56px; height: 40px; object-fit: cover; border: 1px solid rgba(196,154,14,.14); vertical-align: middle; margin-right: .6rem; }
+  .dash-vehicle-cell { display: flex; align-items: center; }
 
   @media(max-width:900px){
     .nav { padding:1.1rem 1.8rem; } .nav.stuck { padding:.85rem 1.8rem; } .nav-links { display:none; }
