@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getFleet } from "./src/api/vehicles";
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 
@@ -7,16 +8,6 @@ const SERVICES = [
   { icon: "⬡", title: "Coach Charter",     desc: "Full-size and midi coaches for schools, sports clubs, corporate groups, and large events." },
   { icon: "◉", title: "Boat Charter",      desc: "River and coastal boat hire for leisure trips, corporate functions, and private group outings." },
   { icon: "✦", title: "Event Transport",   desc: "Mixed-fleet coordination across cars, coaches, and boats for weddings, festivals, and large occasions." },
-];
-
-const FLEET = [
-  { name: "Standard Saloon",   type: "Car",    seats: "3 passengers",  tag: "CAR",    cat: "car"    },
-  { name: "Estate Car",        type: "Car",    seats: "4 passengers",  tag: "CAR",    cat: "car"    },
-  { name: "People Carrier",    type: "Car",    seats: "6 passengers",  tag: "CAR",    cat: "car"    },
-  { name: "Midi Coach",        type: "Coach",  seats: "24 passengers", tag: "COACH",  cat: "coach"  },
-  { name: "Full-Size Coach",   type: "Coach",  seats: "53 passengers", tag: "COACH",  cat: "coach"  },
-  { name: "River Cruiser",     type: "Boat",   seats: "12 passengers", tag: "BOAT",   cat: "boat"   },
-  { name: "Passenger Ferry",   type: "Boat",   seats: "40 passengers", tag: "BOAT",   cat: "boat"   },
 ];
 
 const FLEET_CATS = ["all", "car", "coach", "boat"];
@@ -185,6 +176,7 @@ const CSS = `
   .ft-name { font-size:1.05rem; font-weight:400; color:var(--cream); }
   .ft-type { font-family:'Josefin Sans',sans-serif; font-size:.63rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:.18rem; }
   .ft-tag { font-family:'Josefin Sans',sans-serif; font-size:.52rem; letter-spacing:.18em; text-transform:uppercase; background:var(--gold); color:var(--black); padding:.16rem .48rem; }
+  .fleet-status { font-family:'Josefin Sans',sans-serif; font-size:.7rem; letter-spacing:.08em; color:var(--muted); padding:1.4rem 1.7rem; background:var(--b2); }
   .fleet-vis { background:var(--b2); border:1px solid rgba(196,154,14,.09); padding:2.8rem 2rem; display:flex; flex-direction:column; align-items:center; gap:1.8rem; position:relative; overflow:hidden; }
   .fleet-vis::before { content:''; position:absolute; bottom:-36px; left:50%; transform:translateX(-50%); width:220px; height:70px; background:radial-gradient(ellipse,rgba(196,154,14,.1) 0%,transparent 70%); filter:blur(10px); }
   .fleet-info { text-align:center; width:100%; padding:1.3rem 1.6rem; border-top:1px solid rgba(196,154,14,.09); }
@@ -568,6 +560,9 @@ function LandingPage({ onNavigate }) {
   const [scrolled, setScrolled] = useState(false);
   const [activeFleet, setActiveFleet] = useState(0);
   const [fleetCat, setFleetCat] = useState("all");
+  const [fleet, setFleet] = useState([]);
+  const [fleetLoading, setFleetLoading] = useState(true);
+  const [fleetError, setFleetError] = useState(null);
   useReveal();
 
   useEffect(() => {
@@ -575,6 +570,16 @@ function LandingPage({ onNavigate }) {
     window.addEventListener("scroll", fn);
     return () => window.removeEventListener("scroll", fn);
   }, []);
+
+  useEffect(() => {
+    getFleet()
+      .then((data) => { setFleet(data); setFleetError(null); })
+      .catch((err) => { console.error("Failed to load fleet from API:", err); setFleetError(err.message); })
+      .finally(() => setFleetLoading(false));
+  }, []);
+
+  const filteredFleet = fleet.filter(v => fleetCat === "all" || v.cat === fleetCat);
+  const selectedVehicle = filteredFleet[activeFleet] || filteredFleet[0] || null;
 
   return (
     <>
@@ -662,8 +667,11 @@ function LandingPage({ onNavigate }) {
               ))}
             </div>
             <div className="fleet-tabs reveal d3">
-              {FLEET.filter(v => fleetCat === "all" || v.cat === fleetCat).map((v, i) => (
-                <div key={v.name} className={`fleet-tab${activeFleet === i ? " on" : ""}`} onClick={() => setActiveFleet(i)}>
+              {fleetLoading && <p className="fleet-status">Loading fleet…</p>}
+              {!fleetLoading && fleetError && <p className="fleet-status">Couldn't load the fleet ({fleetError}).</p>}
+              {!fleetLoading && !fleetError && filteredFleet.length === 0 && <p className="fleet-status">No vehicles found.</p>}
+              {filteredFleet.map((v, i) => (
+                <div key={v.id ?? v.name} className={`fleet-tab${activeFleet === i ? " on" : ""}`} onClick={() => setActiveFleet(i)}>
                   <div>
                     <div className="ft-name">{v.name}</div>
                     <div className="ft-type">{v.type} · {v.seats}</div>
@@ -675,15 +683,17 @@ function LandingPage({ onNavigate }) {
           </div>
           <div className="fleet-vis-col">
             <div className="fleet-vis reveal d2">
-              <FleetVisual vehicle={FLEET.filter(v => fleetCat === "all" || v.cat === fleetCat)[activeFleet] || FLEET[0]} />
-              <div className="fleet-info">
-                <div className="fi-name">{(FLEET.filter(v => fleetCat === "all" || v.cat === fleetCat)[activeFleet] || FLEET[0]).name}</div>
-                <div className="fi-detail">
-                  {(FLEET.filter(v => fleetCat === "all" || v.cat === fleetCat)[activeFleet] || FLEET[0]).type}
-                  <b>·</b>
-                  {(FLEET.filter(v => fleetCat === "all" || v.cat === fleetCat)[activeFleet] || FLEET[0]).seats}
+              <FleetVisual vehicle={selectedVehicle} />
+              {selectedVehicle && (
+                <div className="fleet-info">
+                  <div className="fi-name">{selectedVehicle.name}</div>
+                  <div className="fi-detail">
+                    {selectedVehicle.type}
+                    <b>·</b>
+                    {selectedVehicle.seats}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -704,7 +714,7 @@ function LandingPage({ onNavigate }) {
               <label className="f-lbl">Vehicle Type</label>
               <select className="f-inp" style={{ cursor:"pointer" }}>
                 <option value="">Select a vehicle type</option>
-                {FLEET.map((v) => <option key={v.name}>{v.name} — {v.seats}</option>)}
+                {fleet.map((v) => <option key={v.id ?? v.name} value={v.id}>{v.name} — {v.seats}</option>)}
               </select>
             </div>
             <button className="btn-book" onClick={() => onNavigate("register")}>Request a Quote</button>
