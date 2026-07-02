@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { getFleet } from "./src/api/vehicles";
+import { login, register, contextLogin, saveSession, loadSession, clearSession } from "./src/api/auth";
+import { getUserTypes, getUsersByType } from "./src/api/users";
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 
@@ -72,7 +74,8 @@ const CSS = `
   .nav-links { display: flex; gap: 2.4rem; list-style: none; }
   .nav-links a { font-family:'Josefin Sans',sans-serif; font-weight:300; font-size:.7rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted2); text-decoration:none; transition:color .2s; }
   .nav-links a:hover { color: var(--gold-l); }
-  .nav-actions { display: flex; gap: .7rem; }
+  .nav-actions { display: flex; align-items: center; gap: .7rem; }
+  .nav-greeting { font-family:'Josefin Sans',sans-serif; font-size:.68rem; letter-spacing:.1em; color:var(--cream); }
   .btn-ghost { font-family:'Josefin Sans',sans-serif; font-size:.68rem; letter-spacing:.2em; text-transform:uppercase; font-weight:300; background:transparent; border:1px solid rgba(196,154,14,.3); color:var(--gold-l); padding:.48rem 1.2rem; cursor:pointer; transition:border-color .2s,color .2s; }
   .btn-ghost:hover { border-color:var(--gold-l); color:var(--gold-b); }
   .btn-gold { font-family:'Josefin Sans',sans-serif; font-size:.68rem; letter-spacing:.2em; text-transform:uppercase; font-weight:400; background:var(--gold); border:none; color:var(--black); padding:.48rem 1.2rem; cursor:pointer; transition:background .2s; position:relative; overflow:hidden; }
@@ -319,14 +322,48 @@ function AuthLeft({ heading, sub }) {
 
 // ─── LOGIN PAGE ───────────────────────────────────────────────────────────────
 
-function LoginPage({ onNavigate }) {
-  const [role, setRole] = useState("customer");
+function LoginPage({ onNavigate, onLoggedIn }) {
+  const [userTypes, setUserTypes]   = useState([]);
+  const [selectedType, setSelectedType] = useState(null);
+  const [people, setPeople]         = useState([]);
+  const [peopleLoading, setPeopleLoading] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError]           = useState(null);
 
-  const roles = [
-    { id: "customer", icon: "👤", label: "Customer" },
-    { id: "driver",   icon: "🚗", label: "Driver"   },
-    { id: "admin",    icon: "⚙️",  label: "Admin"   },
-  ];
+  useEffect(() => {
+    getUserTypes()
+      .then((types) => { setUserTypes(types); if (types.length) setSelectedType(types[0].ut_id); })
+      .catch((err) => { console.error("Failed to load user types:", err); setError(err.message); });
+  }, []);
+
+  useEffect(() => {
+    if (!selectedType) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting loading/selection ahead of the fetch this effect exists to run
+    setPeopleLoading(true);
+    setSelectedUserId("");
+    getUsersByType(selectedType)
+      .then(setPeople)
+      .catch((err) => { console.error("Failed to load users:", err); setError(err.message); })
+      .finally(() => setPeopleLoading(false));
+  }, [selectedType]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedUserId) { setError("Please select who you're logging in as."); return; }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const { token, user } = await contextLogin(selectedUserId);
+      saveSession({ token, user });
+      onLoggedIn(user);
+      onNavigate("home");
+    } catch (err) {
+      setError(err.message || "Login failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="auth-page">
@@ -338,62 +375,49 @@ function LoginPage({ onNavigate }) {
         <div className="auth-box">
           <button className="auth-back" onClick={() => onNavigate("home")}>← Back to Home</button>
           <h1 className="auth-title">Sign <em>In</em></h1>
-          <p className="auth-subtitle">Select your account type to continue.</p>
+          <p className="auth-subtitle">Select your account type, then who you are.</p>
 
           <div className="role-tabs">
-            {roles.map((r) => (
-              <button key={r.id} className={`role-btn${role === r.id ? " sel" : ""}`} onClick={() => setRole(r.id)}>
-                <span className="role-icon">{r.icon}</span>
-                <span className="role-lbl">{r.label}</span>
+            {userTypes.map((t) => (
+              <button
+                key={t.ut_id}
+                className={`role-btn${selectedType === t.ut_id ? " sel" : ""}`}
+                type="button"
+                onClick={() => setSelectedType(t.ut_id)}
+              >
+                <span className="role-lbl">{t.ut_name}</span>
               </button>
             ))}
           </div>
 
-          <div className="auth-form">
+          <form className="auth-form" onSubmit={handleSubmit}>
             <div className="auth-fg">
-              <label className="auth-lbl">Email Address</label>
-              <input className="auth-inp" type="email" placeholder="you@example.com" />
-            </div>
-            <div className="auth-fg">
-              <label className="auth-lbl">Password</label>
-              <input className="auth-inp" type="password" placeholder="••••••••" />
-            </div>
-
-            {role === "driver" && (
-              <div className="auth-fg">
-                <label className="auth-lbl">Driver ID</label>
-                <input className="auth-inp" type="text" placeholder="e.g. VCS-DR-0042" />
-              </div>
-            )}
-            {role === "admin" && (
-              <div className="auth-fg">
-                <label className="auth-lbl">Admin PIN</label>
-                <input className="auth-inp" type="password" placeholder="4-digit PIN" />
-                <p className="auth-note" style={{ marginTop: ".35rem" }}>Admin PINs are issued by your system administrator.</p>
-              </div>
-            )}
-
-            <div style={{ display:"flex", justifyContent:"flex-end" }}>
-              <button style={{ background:"none", border:"none", fontFamily:"'Josefin Sans',sans-serif", fontSize:".68rem", letterSpacing:".15em", color:"var(--gold-d)", cursor:"pointer" }}>
-                Forgot password?
-              </button>
+              <label className="auth-lbl">Person</label>
+              <select
+                className="auth-inp"
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                disabled={peopleLoading || !people.length}
+              >
+                <option value="">
+                  {peopleLoading ? "Loading…" : people.length ? "Select a person" : "No users of this type"}
+                </option>
+                {people.map((p) => (
+                  <option key={p.u_id} value={p.u_id}>{p.u_f_name} {p.u_l_name}</option>
+                ))}
+              </select>
             </div>
 
-            <button className="auth-submit">Sign In</button>
-          </div>
+            {error && <p className="auth-note" style={{ color: "var(--gold-b)" }}>{error}</p>}
 
-          {role === "customer" && (
-            <p className="auth-foot">
-              No account? <button onClick={() => onNavigate("register")}>Register here</button>
-            </p>
-          )}
-          {role !== "customer" && (
-            <p className="auth-foot" style={{ marginTop: "1.1rem" }}>
-              {role === "driver"
-                ? "Driver accounts are created by management. Contact your coordinator."
-                : "Admin access is restricted to authorised personnel only."}
-            </p>
-          )}
+            <button className="auth-submit" type="submit" disabled={submitting || !selectedUserId}>
+              {submitting ? "Signing In…" : "Sign In"}
+            </button>
+          </form>
+
+          <p className="auth-foot">
+            No account? <button onClick={() => onNavigate("register")}>Register here</button>
+          </p>
         </div>
       </div>
     </div>
@@ -402,8 +426,68 @@ function LoginPage({ onNavigate }) {
 
 // ─── REGISTER PAGE ────────────────────────────────────────────────────────────
 
-function RegisterPage({ onNavigate }) {
+const REGISTER_INITIAL = {
+  u_f_name: "", u_l_name: "", u_email: "", u_phone: "",
+  u_gender: "", u_dob: "",
+  u_password: "", confirmPassword: "",
+  u_address: "", u_city: "", u_postcode: "",
+  tos: false,
+};
+
+function RegisterPage({ onNavigate, onLoggedIn }) {
   const [step, setStep] = useState(1);
+  const [form, setForm] = useState(REGISTER_INITIAL);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  const set = (field) => (e) => {
+    const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    setForm((f) => ({ ...f, [field]: value }));
+  };
+
+  const validateStep1 = () => {
+    if (!form.u_f_name || !form.u_l_name || !form.u_email || !form.u_phone || !form.u_gender || !form.u_dob) {
+      return "Please fill in all fields.";
+    }
+    if (form.u_password.length < 8) return "Password must be at least 8 characters.";
+    if (form.u_password !== form.confirmPassword) return "Passwords do not match.";
+    return null;
+  };
+
+  const goToStep2 = () => {
+    const err = validateStep1();
+    if (err) { setError(err); return; }
+    setError(null);
+    setStep(2);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.u_address || !form.u_city || !form.u_postcode) {
+      setError("Please fill in your address details.");
+      return;
+    }
+    if (!form.tos) {
+      setError("Please agree to the Terms of Service and Privacy Policy.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      const { u_f_name, u_l_name, u_email, u_phone, u_gender, u_dob, u_password, u_address, u_city, u_postcode } = form;
+      await register({ u_f_name, u_l_name, u_email, u_phone, u_gender, u_dob, u_password, u_address, u_city, u_postcode });
+
+      const { token, user } = await login(u_email, u_password);
+      saveSession({ token, user });
+      onLoggedIn(user);
+      onNavigate("home");
+    } catch (err) {
+      setError(err.message || "Registration failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="auth-page">
@@ -430,80 +514,89 @@ function RegisterPage({ onNavigate }) {
             ))}
           </div>
 
+          {error && <p className="auth-note" style={{ color: "var(--gold-b)" }}>{error}</p>}
+
           {step === 1 ? (
             <div className="auth-form">
               <div className="auth-row">
                 <div className="auth-fg">
                   <label className="auth-lbl">First Name</label>
-                  <input className="auth-inp" type="text" placeholder="John" />
+                  <input className="auth-inp" type="text" placeholder="John" value={form.u_f_name} onChange={set("u_f_name")} />
                 </div>
                 <div className="auth-fg">
                   <label className="auth-lbl">Last Name</label>
-                  <input className="auth-inp" type="text" placeholder="Smith" />
+                  <input className="auth-inp" type="text" placeholder="Smith" value={form.u_l_name} onChange={set("u_l_name")} />
                 </div>
               </div>
               <div className="auth-fg">
                 <label className="auth-lbl">Email Address</label>
-                <input className="auth-inp" type="email" placeholder="you@example.com" />
+                <input className="auth-inp" type="email" placeholder="you@example.com" value={form.u_email} onChange={set("u_email")} />
               </div>
               <div className="auth-fg">
                 <label className="auth-lbl">Phone Number</label>
-                <input className="auth-inp" type="tel" placeholder="+44 7700 000000" />
+                <input className="auth-inp" type="tel" placeholder="+44 7700 000000" value={form.u_phone} onChange={set("u_phone")} />
+              </div>
+              <div className="auth-row">
+                <div className="auth-fg">
+                  <label className="auth-lbl">Gender</label>
+                  <select className="auth-inp" value={form.u_gender} onChange={set("u_gender")}>
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="auth-fg">
+                  <label className="auth-lbl">Date of Birth</label>
+                  <input className="auth-inp" type="date" value={form.u_dob} onChange={set("u_dob")} />
+                </div>
               </div>
               <div className="auth-divider"><span className="auth-divider-txt">Security</span></div>
               <div className="auth-fg">
                 <label className="auth-lbl">Password</label>
-                <input className="auth-inp" type="password" placeholder="Min. 8 characters" />
+                <input className="auth-inp" type="password" placeholder="Min. 8 characters" value={form.u_password} onChange={set("u_password")} />
               </div>
               <div className="auth-fg">
                 <label className="auth-lbl">Confirm Password</label>
-                <input className="auth-inp" type="password" placeholder="Repeat password" />
+                <input className="auth-inp" type="password" placeholder="Repeat password" value={form.confirmPassword} onChange={set("confirmPassword")} />
               </div>
-              <button className="auth-submit" onClick={() => setStep(2)}>Continue →</button>
+              <button className="auth-submit" onClick={goToStep2} type="button">Continue →</button>
             </div>
           ) : (
-            <div className="auth-form">
+            <form className="auth-form" onSubmit={handleSubmit}>
               <div className="auth-fg">
                 <label className="auth-lbl">Address Line 1</label>
-                <input className="auth-inp" type="text" placeholder="Street and house number" />
+                <input className="auth-inp" type="text" placeholder="Street and house number" value={form.u_address} onChange={set("u_address")} />
               </div>
               <div className="auth-fg">
                 <label className="auth-lbl">City</label>
-                <input className="auth-inp" type="text" placeholder="London" />
-              </div>
-              <div className="auth-row">
-                <div className="auth-fg">
-                  <label className="auth-lbl">Postcode</label>
-                  <input className="auth-inp" type="text" placeholder="SW1A 1AA" />
-                </div>
-                <div className="auth-fg">
-                  <label className="auth-lbl">Country</label>
-                  <input className="auth-inp" type="text" defaultValue="United Kingdom" />
-                </div>
+                <input className="auth-inp" type="text" placeholder="London" value={form.u_city} onChange={set("u_city")} />
               </div>
               <div className="auth-fg">
-                <label className="auth-lbl">Company <span style={{ color:"var(--muted)", fontWeight:300 }}>(optional)</span></label>
-                <input className="auth-inp" type="text" placeholder="Organisation name" />
+                <label className="auth-lbl">Postcode</label>
+                <input className="auth-inp" type="text" placeholder="SW1A 1AA" value={form.u_postcode} onChange={set("u_postcode")} />
               </div>
               <div className="info-box">
                 <p>
                   This form creates a <strong>customer account</strong>.
-                  Driver and admin accounts are created internally by management and cannot be self-registered.
+                  Employee and admin accounts are created internally by management and cannot be self-registered.
                 </p>
               </div>
               <div style={{ display:"flex", alignItems:"flex-start", gap:".65rem" }}>
-                <input type="checkbox" id="tos" style={{ accentColor:"var(--gold)", width:"13px", height:"13px", marginTop:".15rem", flexShrink:0 }} />
+                <input type="checkbox" id="tos" checked={form.tos} onChange={set("tos")} style={{ accentColor:"var(--gold)", width:"13px", height:"13px", marginTop:".15rem", flexShrink:0 }} />
                 <label htmlFor="tos" style={{ fontFamily:"'Josefin Sans',sans-serif", fontSize:".7rem", letterSpacing:".04em", color:"var(--muted)", lineHeight:1.55, cursor:"pointer" }}>
                   I agree to the <span style={{ color:"var(--gold-l)" }}>Terms of Service</span> and <span style={{ color:"var(--gold-l)" }}>Privacy Policy</span>
                 </label>
               </div>
               <div style={{ display:"flex", gap:".65rem" }}>
-                <button onClick={() => setStep(1)} style={{ flexShrink:0, fontFamily:"'Josefin Sans',sans-serif", fontSize:".7rem", letterSpacing:".18em", textTransform:"uppercase", background:"none", border:"1px solid rgba(196,154,14,.22)", color:"var(--muted)", padding:".88rem 1.1rem", cursor:"pointer" }}>
+                <button type="button" onClick={() => setStep(1)} style={{ flexShrink:0, fontFamily:"'Josefin Sans',sans-serif", fontSize:".7rem", letterSpacing:".18em", textTransform:"uppercase", background:"none", border:"1px solid rgba(196,154,14,.22)", color:"var(--muted)", padding:".88rem 1.1rem", cursor:"pointer" }}>
                   ← Back
                 </button>
-                <button className="auth-submit" style={{ flex:1 }}>Create Account</button>
+                <button className="auth-submit" style={{ flex:1 }} type="submit" disabled={submitting}>
+                  {submitting ? "Creating Account…" : "Create Account"}
+                </button>
               </div>
-            </div>
+            </form>
           )}
 
           <p className="auth-foot">
@@ -556,7 +649,7 @@ function FleetVisual({ vehicle }) {
 
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 
-function LandingPage({ onNavigate }) {
+function LandingPage({ onNavigate, user, onLogout }) {
   const [scrolled, setScrolled] = useState(false);
   const [activeFleet, setActiveFleet] = useState(0);
   const [fleetCat, setFleetCat] = useState("all");
@@ -592,8 +685,17 @@ function LandingPage({ onNavigate }) {
           ))}
         </ul>
         <div className="nav-actions">
-          <button className="btn-ghost" onClick={() => onNavigate("login")}>Sign In</button>
-          <button className="btn-gold"  onClick={() => onNavigate("register")}>Register</button>
+          {user ? (
+            <>
+              <span className="nav-greeting">Hi, {user.u_f_name}</span>
+              <button className="btn-ghost" onClick={onLogout}>Sign Out</button>
+            </>
+          ) : (
+            <>
+              <button className="btn-ghost" onClick={() => onNavigate("login")}>Sign In</button>
+              <button className="btn-gold"  onClick={() => onNavigate("register")}>Register</button>
+            </>
+          )}
         </div>
       </nav>
 
@@ -753,18 +855,24 @@ function LandingPage({ onNavigate }) {
 
 export default function App() {
   const [page, setPage] = useState("home");
+  const [user, setUser] = useState(() => loadSession()?.user ?? null);
 
   const navigate = (p) => {
     setPage(p);
     window.scrollTo({ top: 0, behavior: "instant" });
   };
 
+  const handleLogout = () => {
+    clearSession();
+    setUser(null);
+  };
+
   return (
     <>
       <style>{CSS}</style>
-      {page === "home"     && <LandingPage  onNavigate={navigate} />}
-      {page === "login"    && <LoginPage    onNavigate={navigate} />}
-      {page === "register" && <RegisterPage onNavigate={navigate} />}
+      {page === "home"     && <LandingPage  onNavigate={navigate} user={user} onLogout={handleLogout} />}
+      {page === "login"    && <LoginPage    onNavigate={navigate} onLoggedIn={setUser} />}
+      {page === "register" && <RegisterPage onNavigate={navigate} onLoggedIn={setUser} />}
     </>
   );
 }
