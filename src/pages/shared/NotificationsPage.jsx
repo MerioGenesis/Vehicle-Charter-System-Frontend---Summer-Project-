@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "../../auth/AuthContext";
 import { getMyNotifications, markNotificationRead } from "../../api/notifications";
 import { LoadingState } from "../../components/common/LoadingState";
 import { ErrorState } from "../../components/common/ErrorState";
@@ -7,7 +6,6 @@ import { EmptyState } from "../../components/common/EmptyState";
 import { StatusBadge } from "../../components/common/StatusBadge";
 
 export default function NotificationsPage() {
-  const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,11 +13,11 @@ export default function NotificationsPage() {
 
   const load = useCallback(() => {
     setLoading(true);
-    getMyNotifications(user.u_id)
+    getMyNotifications()
       .then((data) => { setNotifications(data); setError(null); })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [user.u_id]);
+  }, []);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- load() sets loading state ahead of the fetch it performs
   useEffect(() => { load(); }, [load]);

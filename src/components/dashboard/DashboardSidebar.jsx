@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 
-const LINKS = [
+const CUSTOMER_LINKS = [
   { to: "/customer", label: "Dashboard", end: true },
   { to: "/customer/bookings", label: "My Bookings" },
   { to: "/customer/book", label: "Book a Vehicle" },
@@ -9,10 +9,10 @@ const LINKS = [
   { to: "/customer/profile", label: "Profile" },
 ];
 
-export function DashboardSidebar() {
+export function DashboardSidebar({ links = CUSTOMER_LINKS }) {
   return (
     <nav className="dash-sidebar">
-      {LINKS.map((l) => (
+      {links.map((l) => (
         <NavLink
           key={l.to}
           to={l.to}

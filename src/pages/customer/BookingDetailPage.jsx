@@ -4,6 +4,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { getBooking, cancelBooking } from "../../api/bookings";
 import { LoadingState } from "../../components/common/LoadingState";
 import { ErrorState } from "../../components/common/ErrorState";
+import { BookingStatusBadge } from "../../components/common/BookingStatusBadge";
 
 export default function BookingDetailPage() {
   const { id } = useParams();
@@ -46,6 +47,7 @@ export default function BookingDetailPage() {
 
       <div className="dash-card" style={{ maxWidth: 480, marginBottom: "1.2rem" }}>
         {[
+          ["Status", <BookingStatusBadge status={booking.b_status} />],
           ["Date", booking.b_dateFrom?.slice(0, 10)],
           ["Time", booking.b_timeStart],
           ["Pickup", booking.b_pickUpLocation],

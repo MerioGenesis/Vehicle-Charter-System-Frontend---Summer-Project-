@@ -1,16 +1,10 @@
 import { apiFetch } from "./client";
-import { getBookings } from "./bookings";
 
-// Notifications have no direct user id (only n_b_id), so "my notifications"
-// is resolved by cross-referencing the caller's own booking ids. Works
-// whether or not the backend's own ?u_id= filter is scoping things too.
-export async function getMyNotifications(u_id) {
-  const [notifications, myBookings] = await Promise.all([
-    apiFetch(`/notifications?u_id=${u_id}`),
-    getBookings(u_id),
-  ]);
-  const myBookingIds = new Set(myBookings.map((b) => b.b_id));
-  return notifications.filter((n) => myBookingIds.has(n.n_b_id));
+// The backend now scopes "my notifications" server-side per role (Customer:
+// bookings they own; Employee: bookings they're assigned to), so the client
+// no longer needs to cross-reference bookings itself.
+export function getMyNotifications() {
+  return apiFetch("/notifications");
 }
 
 export function markNotificationRead(id) {

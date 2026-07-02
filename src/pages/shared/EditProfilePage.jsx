@@ -15,7 +15,7 @@ const FIELDS = [
   ["u_postcode", "Postcode", "text"],
 ];
 
-export default function EditProfilePage() {
+export default function EditProfilePage({ basePath = "/customer" }) {
   const navigate = useNavigate();
   const { user, updateCurrentUser } = useAuth();
   const [form, setForm] = useState(null);
@@ -41,7 +41,7 @@ export default function EditProfilePage() {
       const { u_f_name, u_l_name, u_email, u_phone, u_address, u_city, u_postcode } = form;
       const updated = await updateUser(user.u_id, { u_f_name, u_l_name, u_email, u_phone, u_address, u_city, u_postcode });
       updateCurrentUser({ u_f_name: updated.u_f_name, u_l_name: updated.u_l_name, u_email: updated.u_email, u_phone: updated.u_phone });
-      navigate("/customer/profile");
+      navigate(`${basePath}/profile`);
     } catch (err) {
       setError(err.message || "Failed to update profile");
     } finally {

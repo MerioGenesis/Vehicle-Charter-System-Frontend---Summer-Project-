@@ -5,7 +5,7 @@ import { getUser } from "../../api/users";
 import { LoadingState } from "../../components/common/LoadingState";
 import { ErrorState } from "../../components/common/ErrorState";
 
-export default function ProfilePage() {
+export default function ProfilePage({ basePath = "/customer" }) {
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,7 @@ export default function ProfilePage() {
           </div>
         ))}
       </div>
-      <Link to="/customer/profile/edit" className="btn-gold" style={{ textDecoration: "none", display: "inline-block" }}>
+      <Link to={`${basePath}/profile/edit`} className="btn-gold" style={{ textDecoration: "none", display: "inline-block" }}>
         Edit Profile
       </Link>
     </div>

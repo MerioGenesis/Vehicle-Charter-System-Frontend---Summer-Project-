@@ -267,6 +267,8 @@ export const CSS = `
   .dash-badge { font-family:'Josefin Sans',sans-serif; font-size:.58rem; letter-spacing:.14em; text-transform:uppercase; padding:.2rem .6rem; display:inline-block; }
   .dash-badge.unread { background: var(--gold); color: var(--black); }
   .dash-badge.read { background: var(--b4); color: var(--muted); }
+  .dash-badge.pending { background: var(--b4); color: var(--gold-l); border: 1px solid rgba(196,154,14,.3); }
+  .dash-badge.confirmed { background: var(--gold); color: var(--black); }
   .dash-error { font-family:'Josefin Sans',sans-serif; font-size:.74rem; color: var(--gold-b); padding: 1rem 0; }
   .dash-loading { font-family:'Josefin Sans',sans-serif; font-size:.74rem; color: var(--muted); padding: 1rem 0; }
   .dash-tabs { display: flex; gap: .4rem; margin-bottom: 1.4rem; }

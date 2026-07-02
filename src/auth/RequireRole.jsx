@@ -1,8 +1,8 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
-// Only "Customer" is mapped today; extend when Employee/Admin dashboards land.
-const ROLE_HOME = { Customer: "/customer" };
+// Extend when the Admin dashboard lands.
+const ROLE_HOME = { Customer: "/customer", Employee: "/employee" };
 
 export function RequireRole({ role, children }) {
   const { user } = useAuth();

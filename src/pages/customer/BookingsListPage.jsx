@@ -6,6 +6,7 @@ import { LoadingState } from "../../components/common/LoadingState";
 import { ErrorState } from "../../components/common/ErrorState";
 import { EmptyState } from "../../components/common/EmptyState";
 import { DashTable } from "../../components/dashboard/DashTable";
+import { BookingStatusBadge } from "../../components/common/BookingStatusBadge";
 
 export default function BookingsListPage() {
   const { user } = useAuth();
@@ -33,12 +34,13 @@ export default function BookingsListPage() {
         />
       )}
       {!loading && !error && bookings.length > 0 && (
-        <DashTable columns={["Date", "Pickup → Destination", "Vehicle", ""]}>
+        <DashTable columns={["Date", "Pickup → Destination", "Vehicle", "Status", ""]}>
           {bookings.map((b) => (
             <tr key={b.b_id}>
               <td>{b.b_dateFrom?.slice(0, 10)} {b.b_timeStart}</td>
               <td>{b.b_pickUpLocation} → {b.b_destination}</td>
               <td>{b.v_name} ({b.vt_name})</td>
+              <td><BookingStatusBadge status={b.b_status} /></td>
               <td><Link to={`/customer/bookings/${b.b_id}`}>View</Link></td>
             </tr>
           ))}

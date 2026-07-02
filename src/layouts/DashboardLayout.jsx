@@ -2,10 +2,10 @@ import { Outlet } from "react-router-dom";
 import { DashboardSidebar } from "../components/dashboard/DashboardSidebar";
 import { DashboardTopbar } from "../components/dashboard/DashboardTopbar";
 
-export default function DashboardLayout() {
+export default function DashboardLayout({ links }) {
   return (
     <div className="dash-layout">
-      <DashboardSidebar />
+      <DashboardSidebar links={links} />
       <div className="dash-main">
         <DashboardTopbar />
         <div className="dash-content">
